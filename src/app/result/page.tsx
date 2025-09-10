@@ -1,4 +1,5 @@
 'use client';
+
 import { useRouter, useSearchParams } from 'next/navigation';
 import breedData from '../data/breed.json';
 import { useEffect, useState } from 'react';
