@@ -23,6 +23,7 @@ export default function Chatbot() {
   const [recommendedBreed, setRecommendedBreed] = useState<string>('');
   const router = useRouter();
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
   // 자동 스크롤
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -61,7 +62,7 @@ export default function Chatbot() {
 
     try {
       // AI 판단 기반 대화 시스템 호출
-      const res = await fetch('/api/gemini', {
+      const res = await fetch(`${baseUrl}/api/gemini`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
