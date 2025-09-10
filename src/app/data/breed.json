@@ -1,0 +1,102 @@
+[
+  {
+    "name": "골든 리트리버",
+    "temperament": ["친화적", "활발함", "충성스러운", "지능적"],
+    "size": "대형견",
+    "energy_level": "high",
+    "description": "가족과 함께하는 것을 좋아하는 활발하고 친근한 대형견"
+  },
+  {
+    "name": "불독",
+    "temperament": ["차분함", "온순함", "끈기있는"],
+    "size": "중형견",
+    "energy_level": "low",
+    "description": "차분하고 온순한 성격으로 실내 생활에 적합한 견종"
+  },
+  {
+    "name": "시바견",
+    "temperament": ["독립적", "차분함", "깔끔함", "충성스러운"],
+    "size": "중형견",
+    "energy_level": "medium",
+    "description": "독립적이고 깔끔한 성격의 일본 원산 견종"
+  },
+  {
+    "name": "비글",
+    "temperament": ["호기심많음", "사교적", "활발함", "친화적"],
+    "size": "중형견",
+    "energy_level": "high",
+    "description": "호기심이 많고 사교적인 성격의 사냥견"
+  },
+  {
+    "name": "푸들",
+    "temperament": ["지능적", "활발함", "훈련하기쉬움"],
+    "size": "중형견",
+    "energy_level": "medium",
+    "description": "매우 똑똑하고 훈련하기 쉬운 견종"
+  },
+  {
+    "name": "치와와",
+    "temperament": ["용감함", "경계심많음", "충성스러운"],
+    "size": "소형견",
+    "energy_level": "medium",
+    "description": "작지만 용감하고 주인에게 충성스러운 소형견"
+  },
+  {
+    "name": "허스키",
+    "temperament": ["활발함", "독립적", "에너지넘침", "모험적"],
+    "size": "대형견",
+    "energy_level": "high",
+    "description": "매우 활발하고 운동량이 많이 필요한 대형견으로, 야외 활동을 좋아합니다."
+  },
+  {
+    "name": "포메라니안",
+    "temperament": ["활기참", "사교적", "용감함", "장난기많음"],
+    "size": "소형견",
+    "energy_level": "medium",
+    "description": "작지만 활기차고 사교적인 성격의 소형견으로, 아파트 생활에 적합합니다."
+  },
+
+  {
+    "name": "보더 콜리",
+    "temperament": ["지능적", "활발함", "집중력좋음", "훈련하기쉬움"],
+    "size": "중형견",
+    "energy_level": "high",
+    "description": "가장 똑똑한 견종 중 하나로, 높은 운동량과 정신적 자극이 필요합니다."
+  },
+  {
+    "name": "말티즈",
+    "temperament": ["온순함", "애교많음", "차분함", "사교적"],
+    "size": "소형견",
+    "energy_level": "low",
+    "description": "부드럽고 하얀 털을 가진 온순한 소형견으로, 실내 생활에 완벽합니다."
+  },
+  {
+    "name": "요크셔 테리어",
+    "temperament": ["용감함", "활기참", "호기심많음", "경계심많음"],
+    "size": "소형견",
+    "energy_level": "medium",
+    "description": "작은 체구에 용감한 성격을 가진 테리어로, 활발하고 똑똑합니다."
+  },
+  {
+    "name": "저먼 셰퍼드",
+    "temperament": ["충성스러운", "보호본능", "지능적", "용감함"],
+    "size": "대형견",
+    "energy_level": "high",
+    "description": "뛰어난 보호 본능과 충성심을 가진 대형견으로, 경비견으로도 유명합니다."
+  },
+  {
+    "name": "웰시 코기",
+    "temperament": ["활발함", "사교적", "지능적", "친화적"],
+    "size": "중형견",
+    "energy_level": "medium",
+    "description": "짧은 다리와 긴 몸을 가진 활발하고 사교적인 목양견입니다."
+  },
+
+  {
+    "name": "닥스훈트",
+    "temperament": ["용감함", "호기심많음", "독립적", "활기참"],
+    "size": "소형견",
+    "energy_level": "medium",
+    "description": "긴 몸과 짧은 다리를 가진 '소시지 개'로 불리는 용감하고 활발한 견종입니다."
+  }
+]
