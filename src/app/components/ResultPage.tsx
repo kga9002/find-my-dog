@@ -100,7 +100,7 @@ export default function ResultPage() {
           <p className="text-center font-medium">로딩중...</p>
         ) : apiData.length === 0 ? (
           <p className="text-center font-medium whitespace-pre-line">
-            {`해당 품종의 유기동물 공고가 없습니다.\n좋은일이죠😊`}
+            {`해당 품종은 현재 보호소에서 찾아볼 수 없어요.\n누군가의 곁에서 잘 지내고 있겠죠? 💛`}
           </p>
         ) : (
           <div className="flex flex-row items-center gap-8">
