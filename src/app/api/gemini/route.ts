@@ -4,142 +4,41 @@ import dogBreeds from '../../data/breed.json';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-// 사용자 정보 추출 함수
-function extractUserInfo(conversationHistory: string) {
-  const userText = conversationHistory.toLowerCase();
-
-  const traits = {
-    activity: 0, // 활동성
-    social: 0, // 사교성
-    calm: 0, // 차분함
-    family: 0, // 가족지향
-    independent: 0, // 독립성
-    experience: 0, // 반려동물 경험
-  };
-
-  // 활동성 키워드
-  const activityKeywords = [
-    '운동',
-    '산책',
-    '등산',
-    '야외',
-    '활동',
-    '뛰어',
-    '에너지',
-  ];
-  const calmKeywords = ['집', '독서', '영화', '휴식', '조용', '평온', '차분'];
-
-  // 사교성 키워드
-  const socialKeywords = ['친구', '모임', '파티', '사람들', '만남', '외향'];
-  const introvertKeywords = ['혼자', '개인', '내향', '조용'];
-
-  // 가족 키워드
-  const familyKeywords = ['가족', '아이', '어린이', '함께', '집'];
-
-  // 독립성 키워드
-  const independentKeywords = ['독립', '자유', '개인', '혼자'];
-
-  // 키워드 점수 계산
-  activityKeywords.forEach((word) => {
-    if (userText.includes(word)) traits.activity += 1;
-  });
-
-  calmKeywords.forEach((word) => {
-    if (userText.includes(word)) traits.calm += 1;
-  });
-
-  socialKeywords.forEach((word) => {
-    if (userText.includes(word)) traits.social += 1;
-  });
-
-  introvertKeywords.forEach((word) => {
-    if (userText.includes(word)) traits.independent += 1;
-  });
-
-  familyKeywords.forEach((word) => {
-    if (userText.includes(word)) traits.family += 1;
-  });
-
-  return traits;
-}
-
-// 품종 매칭 함수
-function matchBreed(userTraits: any) {
-  let bestBreeds: any[] = [];
-  let bestScore = 0;
-
-  dogBreeds.forEach((breed: any) => {
-    let score = 0;
-
-    // 활동성 매칭 (차이값 활용)
-    const activityDiff = userTraits.activity - userTraits.calm;
-    if (breed.energy_level === 'high') {
-      score += Math.max(0, activityDiff); // 활동적일수록 점수
-    } else if (breed.energy_level === 'low') {
-      score += Math.max(0, -activityDiff); // 차분할수록 점수
-    } else {
-      score += 1; // medium은 기본 점수
-    }
-
-    // temperament는 문자열 배열이라 가정
-    const temperamentText = Array.isArray(breed.temperament)
-      ? breed.temperament.join(' ')
-      : breed.temperament;
-
-    // 사교성 / 독립성 / 가족 친화성 매칭
-    if (userTraits.social > 0 && temperamentText.includes('사교적')) {
-      score += userTraits.social;
-    }
-    if (userTraits.independent > 0 && temperamentText.includes('독립적')) {
-      score += userTraits.independent;
-    }
-    if (userTraits.family > 0 && temperamentText.includes('친화적')) {
-      score += userTraits.family;
-    }
-
-    // 최고 점수 업데이트
-    if (score > bestScore) {
-      bestScore = score;
-      bestBreeds = [breed];
-    } else if (score === bestScore) {
-      bestBreeds.push(breed);
-    }
-  });
-
-  // 동점일 경우 랜덤 선택 → 다양한 결과 가능
-  const bestMatch = bestBreeds[Math.floor(Math.random() * bestBreeds.length)];
-
-  return { breed: bestMatch, score: bestScore };
+// 코사인 유사도 함수 (안전하게 벡터 길이 맞춤)
+function cosineSimilarity(a: number[], b: number[]): number {
+	const len = Math.min(a.length, b.length);
+	const dot = a.slice(0, len).reduce((sum, v, i) => sum + v * b[i], 0);
+	const magA = Math.sqrt(a.slice(0, len).reduce((sum, v) => sum + v * v, 0));
+	const magB = Math.sqrt(b.slice(0, len).reduce((sum, v) => sum + v * v, 0));
+	return dot / (magA * magB);
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const { message, conversationHistory = [] } = await req.json();
+	try {
+		const { message, conversationHistory = [] } = await req.json();
 
-    // 대화 히스토리에 새 메시지 추가
-    const newHistory = [
-      ...conversationHistory,
-      { role: 'user', content: message },
-    ];
-    const fullConversation = newHistory
-      .map((msg) => `${msg.role}: ${msg.content}`)
-      .join('\n');
+		// 대화 히스토리 누적
+		const newHistory = [
+			...conversationHistory,
+			{ role: 'user', content: message },
+		];
+		const fullConversation = newHistory
+			.map((msg) => `${msg.role}: ${msg.content}`)
+			.join('\n');
 
-    // 사용자 메시지 개수 확인
-    const userMessageCount = newHistory.filter(
-      (msg) => msg.role === 'user'
-    ).length;
+		// 사용자 메시지 개수
+		const userMessageCount = newHistory.filter(
+			(msg) => msg.role === 'user'
+		).length;
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+		const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+		let judgment = 'CONTINUE';
 
-    // 🔥 4번째 사용자 메시지부터는 무조건 추천!
-    let judgment = 'CONTINUE';
-
-    if (userMessageCount >= 5) {
-      judgment = 'RECOMMEND';
-    } else {
-      // 3번째까지는 AI 판단
-      const judgePrompt = `
+		// 4번째 메시지부터는 무조건 추천
+		if (userMessageCount >= 5) {
+			judgment = 'RECOMMEND';
+		} else {
+			const judgePrompt = `
 대화: ${fullConversation}
 
 강아지 추천할 만큼 정보가 충분한가요?
@@ -147,61 +46,77 @@ export async function POST(req: NextRequest) {
 아직 더 알아야 하면 "CONTINUE"
 
 답변: CONTINUE 또는 RECOMMEND 중 하나만`;
+			const judgeResult = await model.generateContent(judgePrompt);
+			judgment = (await judgeResult.response.text()).trim();
+		}
 
-      const judgeResult = await model.generateContent(judgePrompt);
-      judgment = (await judgeResult.response.text()).trim();
-    }
+		if (judgment === 'RECOMMEND') {
+			// 1. 사용자 메시지 임베딩
+			const embedModel = genAI.getGenerativeModel({ model: 'embedding-001' });
+			const embedRes = await embedModel.embedContent(message);
+			const userVector = embedRes.embedding.values;
 
-    if (judgment === 'RECOMMEND') {
-      // 추천 단계
-      const userTraits = extractUserInfo(fullConversation);
-      const matchResult = matchBreed(userTraits);
+			// 2. 품종과 유사도 계산 (임베딩은 breed.json에 있음)
+			const scored = dogBreeds.map((breed: any) => {
+				const sim = cosineSimilarity(userVector, breed.vector);
+				return { ...breed, score: sim };
+			});
 
-      const buttonMessage = `🎉 당신에게 딱 맞는 강아지 품종을 찾았어요! 아래 버튼을 눌러서 결과를 확인해보세요.`;
+			// 3. 상위 3개 추출
+			const topBreeds = scored.sort((a, b) => b.score - a.score).slice(0, 3);
 
-      return NextResponse.json({
-        message: buttonMessage,
-        type: 'recommendation',
-        recommendedBreed: matchResult.breed.name,
-        // breedData: matchResult.breed,
-        // userTraits: userTraits,
-        conversationHistory: [
-          ...newHistory,
-          { role: 'assistant', content: buttonMessage },
-        ],
-      });
-    } else {
-      // 계속 대화
-      const chatPrompt = `
+			// 4. Gemini에게 최종 추천 요청
+			const prompt = `
+사용자 설명: ${message}
+후보 품종:
+${topBreeds.map((b) => `- ${b.name}: ${b.description}`).join('\n')}
+
+위 후보 중에서 사용자에게 가장 잘 맞는 품종을 한 가지 고르고,
+간단한 이유를 설명하세요.`;
+
+			const result = await model.generateContent(prompt);
+			const explanation = await result.response.text();
+
+			const buttonMessage = `🎉 당신에게 딱 맞는 강아지 품종을 찾았어요! 아래 버튼을 눌러서 결과를 확인해보세요.`;
+
+			return NextResponse.json({
+				message: buttonMessage,
+				type: 'recommendation',
+				recommendedBreed: topBreeds[0].name,
+				explanation,
+				conversationHistory: [
+					...newHistory,
+					{ role: 'assistant', content: buttonMessage },
+				],
+			});
+		} else {
+			// 계속 대화
+			const chatPrompt = `
 대화: ${fullConversation}
 
 강아지 추천 상담사로서 자연스럽게 대화하세요.
 - 1-2문장으로 짧게 답변
 - 사용자 답변에 공감 한마디 + 또 다른 질문 하나
 - 생활패턴, 성격, 거주환경 등을 파악하는것이 목표
-- 친근하고 간단하게
+- 친근하고 간단하게`;
 
-예시: "와 활동적이시네요! 보통 집에서는 어떻게 시간 보내세요?"`;
+			const chatResult = await model.generateContent(chatPrompt);
+			const response = await chatResult.response.text();
 
-      const chatResult = await model.generateContent(chatPrompt);
-      const response = await chatResult.response.text();
-
-      return NextResponse.json({
-        message: response,
-        type: 'conversation',
-        conversationHistory: [
-          ...newHistory,
-          { role: 'assistant', content: response },
-        ],
-      });
-    }
-  } catch (error) {
-    console.error('Chat API 오류:', error);
-    return NextResponse.json(
-      {
-        error: '대화 처리 중 오류가 발생했습니다.',
-      },
-      { status: 500 }
-    );
-  }
+			return NextResponse.json({
+				message: response,
+				type: 'conversation',
+				conversationHistory: [
+					...newHistory,
+					{ role: 'assistant', content: response },
+				],
+			});
+		}
+	} catch (error) {
+		console.error('Chat API 오류:', error);
+		return NextResponse.json(
+			{ error: '대화 처리 중 오류가 발생했습니다.' },
+			{ status: 500 }
+		);
+	}
 }
