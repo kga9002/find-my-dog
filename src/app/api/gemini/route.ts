@@ -65,47 +65,49 @@ function extractUserInfo(conversationHistory: string) {
 
 // 품종 매칭 함수
 function matchBreed(userTraits: any) {
-  let bestMatch = dogBreeds[0];
+  let bestBreeds: any[] = [];
   let bestScore = 0;
 
   dogBreeds.forEach((breed: any) => {
     let score = 0;
 
-    // 활동성 매칭
-    if (
-      breed.energy_level === 'high' &&
-      userTraits.activity > userTraits.calm
-    ) {
-      score += 3;
-    } else if (
-      breed.energy_level === 'low' &&
-      userTraits.calm > userTraits.activity
-    ) {
-      score += 3;
-    } else if (breed.energy_level === 'medium') {
-      score += 2;
+    // 활동성 매칭 (차이값 활용)
+    const activityDiff = userTraits.activity - userTraits.calm;
+    if (breed.energy_level === 'high') {
+      score += Math.max(0, activityDiff); // 활동적일수록 점수
+    } else if (breed.energy_level === 'low') {
+      score += Math.max(0, -activityDiff); // 차분할수록 점수
+    } else {
+      score += 1; // medium은 기본 점수
     }
 
-    // 사교성 매칭
-    if (breed.temperament.includes('사교적') && userTraits.social > 0) {
-      score += 2;
-    } else if (
-      breed.temperament.includes('독립적') &&
-      userTraits.independent > 0
-    ) {
-      score += 2;
+    // temperament는 문자열 배열이라 가정
+    const temperamentText = Array.isArray(breed.temperament)
+      ? breed.temperament.join(' ')
+      : breed.temperament;
+
+    // 사교성 / 독립성 / 가족 친화성 매칭
+    if (userTraits.social > 0 && temperamentText.includes('사교적')) {
+      score += userTraits.social;
+    }
+    if (userTraits.independent > 0 && temperamentText.includes('독립적')) {
+      score += userTraits.independent;
+    }
+    if (userTraits.family > 0 && temperamentText.includes('친화적')) {
+      score += userTraits.family;
     }
 
-    // 가족 친화성
-    if (breed.temperament.includes('친화적') && userTraits.family > 0) {
-      score += 2;
-    }
-
+    // 최고 점수 업데이트
     if (score > bestScore) {
       bestScore = score;
-      bestMatch = breed;
+      bestBreeds = [breed];
+    } else if (score === bestScore) {
+      bestBreeds.push(breed);
     }
   });
+
+  // 동점일 경우 랜덤 선택 → 다양한 결과 가능
+  const bestMatch = bestBreeds[Math.floor(Math.random() * bestBreeds.length)];
 
   return { breed: bestMatch, score: bestScore };
 }
