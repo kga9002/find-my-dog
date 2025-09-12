@@ -67,8 +67,8 @@ export async function POST(req: NextRequest) {
 				return { ...breed, score: sim };
 			});
 
-			// 3. 상위 3개 추출
-			const topBreeds = scored.sort((a, b) => b.score - a.score).slice(0, 3);
+			// 3. 상위 5개 추출
+			const topBreeds = scored.sort((a, b) => b.score - a.score).slice(0, 5);
 
 			// 4. Gemini에게 최종 추천 요청
 			const prompt = `
