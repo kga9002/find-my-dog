@@ -53,7 +53,12 @@ export async function POST(req: NextRequest) {
 		if (judgment === 'RECOMMEND') {
 			// 1. 사용자 메시지 임베딩
 			const embedModel = genAI.getGenerativeModel({ model: 'embedding-001' });
-			const embedRes = await embedModel.embedContent(message);
+			const fullUserInput = newHistory
+				.filter((msg) => msg.role === 'user')
+				.map((msg) => msg.content)
+				.join(' ');
+
+			const embedRes = await embedModel.embedContent(fullUserInput);
 			const userVector = embedRes.embedding.values;
 
 			// 2. 품종과 유사도 계산 (임베딩은 breed.json에 있음)
@@ -94,11 +99,14 @@ ${topBreeds.map((b) => `- ${b.name}: ${b.description}`).join('\n')}
 			const chatPrompt = `
 대화: ${fullConversation}
 
-강아지 추천 상담사로서 자연스럽게 대화하세요.
-- 1-2문장으로 짧게 답변
-- 사용자 답변에 공감 한마디 + 또 다른 질문 하나
-- 생활패턴, 성격, 거주환경 등을 파악하는것이 목표
-- 친근하고 간단하게`;
+당신은 강아지 입양 상담사입니다.  
+사용자와 자연스럽게 대화하며 그들의 생활 방식, 성격, 거주환경 등을 파악하세요.  
+
+- 항상 같은 패턴이 아닌, 상황에 맞는 다양한 방식으로 응답하세요.  
+- 때로는 공감, 때로는 경험담, 때로는 가벼운 농담을 섞어도 좋습니다.  
+- 1~3문장 정도로 짧게 답변하되, 대화가 이어질 수 있도록 질문을 자연스럽게 던지세요.  
+- 질문은 너무 형식적이지 않게, 실제 사람이 대화하듯 변화를 주세요.  
+- 최종 목표는 사용자가 어떤 강아지와 어울릴지 알 수 있는 정보를 얻는 것입니다.`;
 
 			const chatResult = await model.generateContent(chatPrompt);
 			const response = await chatResult.response.text();
